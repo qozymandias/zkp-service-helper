@@ -1,0 +1,30 @@
+{
+    "details": {
+        "server_url": "https://rpc.zkwasmhub.com:8090",
+        "private_key": "0x",
+        "chain_id": 0
+    },
+    "verify": {
+        "provider_url": "https://data-seed-prebsc-1-s3.binance.org:8545",
+        "manual_task_id_to_verify": "68709dcc0a7b4ac8c109b12a"
+    },
+    "query": {
+        "task_id": "68709dcc0a7b4ac8c109b12a",
+        "md5": "4CB1FBCCEC0C107C41405FC1FB380799",
+        "image": "./data/4CB1FBCCEC0C107C41405FC1FB380799.wasm",
+        "node_address": "0x3552f5e0bfccf79a87a304e80455b368af9b56f6"
+    },
+    "auto_submit": {
+        "id": "68706aab0a7b4ac8c109b0eb",
+        "task_id_in_auto_submit_batch": "687059020a7b4ac8c109b0ba"
+    },
+    "archive": {
+        "id": "000000000000000000000000",
+        "archived_task_id": "000000000000000000000000",
+        "archive_volume_name": "vol_1"
+    },
+    "tasks": {
+        "md5": "4CB1FBCCEC0C107C41405FC1FB380799",
+        "image": "./data/4CB1FBCCEC0C107C41405FC1FB380799.wasm"
+    }
+}
