@@ -1,4 +1,5 @@
-#![allow(dead_code, non_snake_case)]
+#![allow(non_snake_case, clippy::pub_underscore_fields)]
+
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -32,7 +33,7 @@ pub struct StatisticsInfo {
 
 #[derive(Deserialize, Serialize)]
 pub struct TimingStatistics {
-    pub latest_time_taken_secs: u64,
+    pub latest_time_taken_secs: f64,
     pub latest_timestamp: String,
     pub latest_task_id: ObjectId,
 }
@@ -145,7 +146,7 @@ pub enum TaskStatus {
 pub struct VerifierContracts {
     pub chain_id: u32,
     pub aggregator_verifier: String,
-    pub batch_verifier: String,
+    pub batch_verifier: Option<String>,
     pub circuit_size: u32,
 }
 
@@ -187,28 +188,28 @@ pub enum AutoSubmitStatus {
 pub struct Task {
     pub user_address: String,
     pub node_address: Option<String>,
-    pub md5: String,
-    pub task_type: String,
+    pub _id: ObjectId,
     pub status: TaskStatus,
-    pub single_proof: Vec<u8>,
-    pub proof: Vec<u8>,
-    pub aux: Vec<u8>,
-    pub shadow_instances: Vec<u8>,
-    pub batch_instances: Vec<u8>,
-    pub instances: Vec<u8>,
+    pub md5: String,
+    pub task_type: TaskType,
     pub public_inputs: Vec<String>,
     pub private_inputs: Vec<String>,
+    pub single_proof: Vec<u8>,
+    pub proof: Vec<u8>,
+    pub batch_instances: Vec<u8>,
+    pub shadow_instances: Vec<u8>,
+    pub instances: Vec<u8>,
+    pub aux: Vec<u8>,
     pub input_context: Vec<u8>,
     pub input_context_type: Option<InputContextType>,
     pub output_context: Vec<u8>,
-    pub _id: ObjectId,
     pub submit_time: String,
     pub process_started: Option<String>,
     pub process_finished: Option<String>,
     pub task_fee: Option<Vec<u8>>,
     pub status_message: Option<String>,
     pub internal_message: Option<String>,
-    pub guest_statics: Option<u64>,
+    pub guest_statics: Option<u32>,
     pub task_verification_data: TaskVerificationData,
     pub debug_logs: Option<String>,
     pub proof_submit_mode: Option<ProofSubmitMode>,
@@ -222,7 +223,7 @@ pub struct ConciseTask {
     pub _id: ObjectId,
     pub user_address: String,
     pub md5: String,
-    pub task_type: String,
+    pub task_type: TaskType,
     pub status: TaskStatus,
     pub submit_time: String,
     pub process_started: Option<String>,
@@ -387,22 +388,24 @@ pub enum AddProveTaskRestrictions {
 #[derive(Deserialize, Serialize)]
 pub struct BaseAddImageParams {
     pub name: String,
-    pub image: Vec<u8>,
     pub image_md5: String,
+    pub image: Vec<u8>,
     pub user_address: String,
     pub description_url: String,
     pub avator_url: String,
     pub circuit_size: u32,
     pub prove_payment_src: ProvePaymentSrc,
     pub auto_submit_network_ids: Vec<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub add_prove_task_restrictions: Option<AddProveTaskRestrictions>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub inherited_merkle_data_md5: Option<String>,
 }
 
 #[derive(Deserialize, Serialize)]
 pub struct WithInitialContext {
-    pub initial_context: Vec<u8>,
     pub initial_context_md5: String,
+    pub initial_context: Vec<u8>,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -472,6 +475,7 @@ pub struct BaseResetImageParams {
     pub user_address: String,
     pub prove_payment_src: ProvePaymentSrc,
     pub auto_submit_network_ids: Vec<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub add_prove_task_restrictions: Option<AddProveTaskRestrictions>,
 }
 
@@ -540,8 +544,8 @@ pub struct QueryParams {
     pub user_address: Option<String>,
     pub md5: Option<String>,
     pub id: Option<String>,
-    pub tasktype: Option<String>,
-    pub taskstatus: Option<String>,
+    pub tasktype: Option<TaskType>,
+    pub taskstatus: Option<TaskStatus>,
     pub start: Option<u64>,
     pub total: Option<u64>,
 }
@@ -652,15 +656,13 @@ pub struct ServerVersionInfo {
 
 #[derive(Deserialize, Serialize)]
 pub struct AppConfig {
-    pub receiver_address: String,
     pub deployer_address: String,
+    pub receiver_address: String,
     pub task_fee_list: TaskFeeList,
     pub chain_info_list: Vec<ChainInfo>,
     pub latest_server_checksum: Vec<u8>,
     pub topup_token_params: TokenParams,
     pub topup_token_data: TokenData,
-    pub deployments: Vec<ContractDeployments>,
-    pub subscription_plans: Vec<SubscriptionParams>,
     pub supported_auto_submit_network_ids: Vec<u32>,
     pub server_version_info: ServerVersionInfo,
 }
@@ -815,8 +817,8 @@ pub struct EstimatedProofFeeParams {
 
 #[derive(Deserialize, Serialize)]
 pub struct EstimatedProofFee {
-    pub min: Option<u64>,
-    pub max: Option<u64>,
+    pub min: Option<ethers::types::U256>,
+    pub max: Option<ethers::types::U256>,
     pub msg: String,
 }
 

@@ -11,14 +11,15 @@
     "query": {
         "task_id": "68709dcc0a7b4ac8c109b12a",
         "md5": "4CB1FBCCEC0C107C41405FC1FB380799",
-        "image": "./data/4CB1FBCCEC0C107C41405FC1FB380799.wasm",
         "node_address": "0x3552f5e0bfccf79a87a304e80455b368af9b56f6"
     },
     "auto_submit": {
-        "id": "68706aab0a7b4ac8c109b0eb",
+        "round1_id": "68706a310a7b4ac8c109b0ea",
+        "round2_id": "68706aab0a7b4ac8c109b0eb",
         "task_id_in_auto_submit_batch": "687059020a7b4ac8c109b0ba"
     },
     "archive": {
+        "server_url": "http://localhost:8101",
         "id": "000000000000000000000000",
         "archived_task_id": "000000000000000000000000",
         "archive_volume_name": "vol_1"

@@ -43,6 +43,7 @@ pub enum TaskEndpoint {
 }
 
 impl TaskEndpoint {
+    #[must_use]
     pub fn as_path(&self) -> &'static str {
         match self {
             TaskEndpoint::Image => "image",
@@ -89,6 +90,7 @@ impl TaskEndpoint {
         }
     }
 
+    #[must_use]
     pub fn path_params(&self) -> String {
         match self {
             TaskEndpoint::ArchiveTask(fst)
@@ -100,7 +102,7 @@ impl TaskEndpoint {
             TaskEndpoint::ArchiveAutoSubmitInfoByTask(fst, snd) | TaskEndpoint::ArchiveAutoSubmitInfo(fst, snd) => {
                 format!("/{fst}/{snd}")
             }
-            _ => "".to_string(),
+            _ => String::new(),
         }
     }
 }

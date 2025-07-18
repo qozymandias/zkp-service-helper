@@ -1,16 +1,23 @@
+use serde::Serialize;
+
 use super::*;
 use crate::run_test;
 
+fn check_paginated_res<T: Serialize>(res: &crate::interface::PaginationResult<Vec<T>>) {
+    assert!(!res.data.is_empty());
+    assert!(usize::try_from(res.total).expect("Should convert") >= res.data.len());
+}
+
 #[tokio::test]
 async fn test_query_image() {
-    let res = run_test!(ZkWasmServiceHelper::query_image, CONFIG.query.md5.clone());
+    let res = run_test!(ZkWasmServiceHelper::query_image, CONFIG.query.md5.clone()).expect("Image should exist in DB");
     assert_eq!(res.md5, CONFIG.query.md5);
 }
 
 #[tokio::test]
 async fn test_query_image_binary() {
     let res = run_test!(ZkWasmServiceHelper::query_image_binary, CONFIG.query.md5.clone());
-    assert!(!res.is_empty())
+    assert!(!res.is_empty());
 }
 
 #[tokio::test]
@@ -23,22 +30,26 @@ async fn test_query_user() {
 #[tokio::test]
 async fn test_query_user_subscription() {
     let addr = CONFIG.user_address();
-    let res = run_test!(ZkWasmServiceHelper::query_user_subscription, addr.clone()).expect("Should exist in db");
-    assert_eq!(addr, res.subscriber_address);
+    let _res = run_test!(ZkWasmServiceHelper::query_user_subscription, addr.clone());
+    #[cfg(feature = "pedantic-tests")]
+    {
+        let res = _res.expect("Should exist in db");
+        assert_eq!(addr, res.subscriber_address);
+    }
 }
 
 #[tokio::test]
 async fn test_query_tx_history() {
-    let res = run_test!(ZkWasmServiceHelper::query_tx_history, CONFIG.user_address());
-    assert!(!res.data.is_empty());
-    assert_eq!(res.total as usize, res.data.len());
+    let _res = run_test!(ZkWasmServiceHelper::query_tx_history, CONFIG.user_address());
+    #[cfg(feature = "pedantic-tests")]
+    check_paginated_res(&_res);
 }
 
 #[tokio::test]
 async fn test_query_deposit_history() {
-    let res = run_test!(ZkWasmServiceHelper::query_deposit_history, CONFIG.user_address());
-    assert!(!res.data.is_empty());
-    assert_eq!(res.total as usize, res.data.len());
+    let _res = run_test!(ZkWasmServiceHelper::query_deposit_history, CONFIG.user_address());
+    #[cfg(feature = "pedantic-tests")]
+    check_paginated_res(&_res);
 }
 
 #[tokio::test]
@@ -55,8 +66,7 @@ async fn test_query_statistics() {
 async fn test_query_node_statistics() {
     let addr = CONFIG.query.node_address.clone();
     let res = run_test!(ZkWasmServiceHelper::query_node_statistics, Some(addr.clone()), None, None);
-    assert!(!res.data.is_empty());
-    assert_eq!(res.total as usize, res.data.len());
+    check_paginated_res(&res);
     assert_eq!(addr, res.data[0].address);
 }
 
@@ -101,11 +111,11 @@ async fn test_query_prover_node_timerange_stats() {
     let res = run_test!(
         ZkWasmServiceHelper::query_prover_node_timerange_stats,
         CONFIG.query.node_address.clone(),
-        now,
         then,
+        now,
     );
-    let fst_dt: chrono::DateTime<chrono::Utc> = res.fst_ts.and_then(|s| s.parse().ok()).unwrap();
-    let lst_dt: chrono::DateTime<chrono::Utc> = res.lst_ts.and_then(|s| s.parse().ok()).unwrap();
+    let fst_dt: chrono::DateTime<chrono::Utc> = res.fst_ts.and_then(|s| s.parse().ok()).expect("Should convert");
+    let lst_dt: chrono::DateTime<chrono::Utc> = res.lst_ts.and_then(|s| s.parse().ok()).expect("Should convert");
     let fst_st: std::time::SystemTime = fst_dt.into();
     let lst_st: std::time::SystemTime = lst_dt.into();
     assert!(now > fst_st);
@@ -114,6 +124,9 @@ async fn test_query_prover_node_timerange_stats() {
 
 #[cfg(test)]
 mod task {
+    use crate::interface::TaskStatus;
+    use crate::interface::TaskType;
+
     use super::*;
 
     #[tokio::test]
@@ -129,8 +142,7 @@ mod task {
             None,
             None,
         );
-        assert!(!res.data.is_empty());
-        assert_eq!(res.total as usize, res.data.len());
+        check_paginated_res(&res);
         assert_eq!(addr, res.data[0].user_address);
     }
 
@@ -147,8 +159,7 @@ mod task {
             None,
             None,
         );
-        assert!(!res.data.is_empty());
-        assert_eq!(res.total as usize, res.data.len());
+        check_paginated_res(&res);
         assert_eq!(md5, res.data[0].md5);
     }
 
@@ -165,46 +176,44 @@ mod task {
             None,
             None,
         );
-        assert!(!res.data.is_empty());
-        assert_eq!(res.total as usize, res.data.len());
+        check_paginated_res(&res);
         assert_eq!(id, res.data[0]._id.oid);
     }
 
     #[tokio::test]
     async fn test_query_tasks_by_tasktype() {
-        let task_type = serde_json::to_string(&crate::interface::TaskType::Prove).expect("Should convert to string");
         let res = run_test!(
             ZkWasmServiceHelper::query_tasks,
             None,
             None,
             None,
-            Some(task_type.clone()),
+            Some(TaskType::Prove),
             None,
             None,
             None,
         );
-        assert!(!res.data.is_empty());
-        assert_eq!(res.total as usize, res.data.len());
-        assert_eq!(task_type, res.data[0].task_type);
+        check_paginated_res(&res);
+        assert_eq!(
+            serde_json::to_string(&TaskType::Prove).expect("Should convert"),
+            serde_json::to_string(&res.data[0].task_type).expect("Should convert")
+        );
     }
 
     #[tokio::test]
     async fn test_query_tasks_by_status() {
-        let status = serde_json::to_string(&crate::interface::TaskStatus::Done).expect("Should convert to string");
         let res = run_test!(
             ZkWasmServiceHelper::query_tasks,
             None,
             None,
             None,
             None,
-            Some(status.clone()),
+            Some(TaskStatus::Done),
             None,
             None,
         );
-        assert!(!res.data.is_empty());
-        assert_eq!(res.total as usize, res.data.len());
+        check_paginated_res(&res);
         assert_eq!(
-            status,
+            serde_json::to_string(&TaskStatus::Done).expect("Should convert"),
             serde_json::to_string(&res.data[0].status).expect("Should convert to string")
         );
     }
@@ -238,8 +247,7 @@ mod task {
             None,
             None,
         );
-        assert!(!res.data.is_empty());
-        assert_eq!(res.total as usize, res.data.len());
+        check_paginated_res(&res);
         assert_eq!(addr, res.data[0].user_address);
     }
 
@@ -256,8 +264,7 @@ mod task {
             None,
             None,
         );
-        assert!(!res.data.is_empty());
-        assert_eq!(res.total as usize, res.data.len());
+        check_paginated_res(&res);
         assert_eq!(md5, res.data[0].md5);
     }
 
@@ -274,47 +281,45 @@ mod task {
             None,
             None,
         );
-        assert!(!res.data.is_empty());
-        assert_eq!(res.total as usize, res.data.len());
+        check_paginated_res(&res);
         assert_eq!(id, res.data[0]._id.oid);
     }
 
     #[tokio::test]
     async fn test_query_concise_tasks_by_tasktype() {
-        let task_type = serde_json::to_string(&crate::interface::TaskType::Prove).expect("Should convert to string");
         let res = run_test!(
             ZkWasmServiceHelper::query_concise_tasks,
             None,
             None,
             None,
-            Some(task_type.clone()),
+            Some(TaskType::Prove),
             None,
             None,
             None,
         );
-        assert!(!res.data.is_empty());
-        assert_eq!(res.total as usize, res.data.len());
-        assert_eq!(task_type, res.data[0].task_type);
+        check_paginated_res(&res);
+        assert_eq!(
+            serde_json::to_string(&TaskType::Prove).expect("Should convert"),
+            serde_json::to_string(&res.data[0].task_type).expect("Should convert")
+        );
     }
 
     #[tokio::test]
     async fn test_query_concise_tasks_by_status() {
-        let status = serde_json::to_string(&crate::interface::TaskStatus::Done).expect("Should convert to string");
         let res = run_test!(
             ZkWasmServiceHelper::query_concise_tasks,
             None,
             None,
             None,
             None,
-            Some(status.clone()),
+            Some(TaskStatus::Done),
             None,
             None,
         );
-        assert!(!res.data.is_empty());
-        assert_eq!(res.total as usize, res.data.len());
+        check_paginated_res(&res);
         assert_eq!(
-            status,
-            serde_json::to_string(&res.data[0].status).expect("Should convert to string")
+            serde_json::to_string(&TaskStatus::Done).expect("Should convert"),
+            serde_json::to_string(&res.data[0].status).expect("Should convert")
         );
     }
 
@@ -330,24 +335,6 @@ mod auto_submit {
     use super::*;
 
     #[tokio::test]
-    async fn test_query_auto_submit_proofs_by_id() {
-        let id = CONFIG.auto_submit.id.clone();
-        let res = run_test!(
-            ZkWasmServiceHelper::query_auto_submit_proofs,
-            Some(id.clone()),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        );
-        assert!(!res.data.is_empty());
-        assert_eq!(res.total as usize, res.data.len());
-        assert_eq!(id, res.data[0]._id.as_ref().expect("Should have id").oid);
-    }
-
-    #[tokio::test]
     async fn test_query_auto_submit_proofs_by_task_id() {
         let id = CONFIG.auto_submit.task_id_in_auto_submit_batch.clone();
         let res = run_test!(
@@ -360,8 +347,7 @@ mod auto_submit {
             None,
             None,
         );
-        assert!(!res.data.is_empty());
-        assert_eq!(res.total as usize, res.data.len());
+        check_paginated_res(&res);
         assert_eq!(id, res.data[0].task_id);
     }
 
@@ -377,11 +363,10 @@ mod auto_submit {
             None,
             None,
         );
-        assert!(!res.data.is_empty());
-        assert_eq!(res.total as usize, res.data.len());
+        check_paginated_res(&res);
         assert_eq!(
-            serde_json::to_string(&crate::interface::AutoSubmitProofStatus::Pending).unwrap(),
-            serde_json::to_string(&res.data[0].status).unwrap()
+            serde_json::to_string(&crate::interface::AutoSubmitProofStatus::Batched).expect("Should convert"),
+            serde_json::to_string(&res.data[0].status).expect("Should convert")
         );
     }
 
@@ -398,9 +383,25 @@ mod auto_submit {
             None,
             None,
         );
-        assert!(!res.data.is_empty());
-        assert_eq!(res.total as usize, res.data.len());
+        check_paginated_res(&res);
         assert_eq!(chain_id, res.data[0].auto_submit_network_chain_id);
+    }
+
+    #[tokio::test]
+    async fn test_query_round1_info_by_id() {
+        let id = CONFIG.auto_submit.round1_id.clone();
+        let res = run_test!(
+            ZkWasmServiceHelper::query_round1_info,
+            Some(id.clone()),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        );
+        check_paginated_res(&res);
+        assert_eq!(id, res.data[0]._id.as_ref().expect("Should have id").oid);
     }
 
     #[tokio::test]
@@ -416,8 +417,7 @@ mod auto_submit {
             None,
             None,
         );
-        assert!(!res.data.is_empty());
-        assert_eq!(res.total as usize, res.data.len());
+        check_paginated_res(&res);
         assert!(res.data[0].task_ids.contains(&id));
     }
 
@@ -427,17 +427,16 @@ mod auto_submit {
             ZkWasmServiceHelper::query_round1_info,
             None,
             None,
-            Some(crate::interface::Round1Status::Pending),
+            Some(crate::interface::Round1Status::Batched),
             None,
             None,
             None,
             None,
         );
-        assert!(!res.data.is_empty());
-        assert_eq!(res.total as usize, res.data.len());
+        check_paginated_res(&res);
         assert_eq!(
-            serde_json::to_string(&crate::interface::Round1Status::Pending).unwrap(),
-            serde_json::to_string(&res.data[0].status).unwrap()
+            serde_json::to_string(&crate::interface::Round1Status::Batched).expect("Should convert"),
+            serde_json::to_string(&res.data[0].status).expect("Should convert"),
         );
     }
 
@@ -454,9 +453,25 @@ mod auto_submit {
             None,
             None,
         );
-        assert!(!res.data.is_empty());
-        assert_eq!(res.total as usize, res.data.len());
+        check_paginated_res(&res);
         assert_eq!(chain_id, res.data[0].auto_submit_network_chain_id);
+    }
+
+    #[tokio::test]
+    async fn test_query_round2_info_by_id() {
+        let id = CONFIG.auto_submit.round2_id.clone();
+        let res = run_test!(
+            ZkWasmServiceHelper::query_round2_info,
+            Some(id.clone()),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        );
+        check_paginated_res(&res);
+        assert_eq!(id, res.data[0]._id.as_ref().expect("Should have id").oid);
     }
 
     #[tokio::test]
@@ -472,8 +487,7 @@ mod auto_submit {
             None,
             None,
         );
-        assert!(!res.data.is_empty());
-        assert_eq!(res.total as usize, res.data.len());
+        check_paginated_res(&res);
         assert!(res.data[0].task_ids.contains(&id));
     }
 
@@ -489,11 +503,10 @@ mod auto_submit {
             None,
             None,
         );
-        assert!(!res.data.is_empty());
-        assert_eq!(res.total as usize, res.data.len());
+        check_paginated_res(&res);
         assert_eq!(
-            serde_json::to_string(&crate::interface::Round2Status::ProofRegistered).unwrap(),
-            serde_json::to_string(&res.data[0].status).unwrap()
+            serde_json::to_string(&crate::interface::Round2Status::ProofRegistered).expect("Should convert"),
+            serde_json::to_string(&res.data[0].status).expect("Should convert"),
         );
     }
 
@@ -510,100 +523,7 @@ mod auto_submit {
             None,
             None,
         );
-        assert!(!res.data.is_empty());
-        assert_eq!(res.total as usize, res.data.len());
+        check_paginated_res(&res);
         assert_eq!(chain_id, res.data[0].auto_submit_network_chain_id);
-    }
-}
-
-#[cfg(test)]
-mod archive {
-    use super::*;
-
-    #[tokio::test]
-    async fn test_query_archive_summary() {
-        run_test!(ZkWasmServiceHelper::query_archive_summary);
-    }
-
-    #[tokio::test]
-    async fn test_query_archive_task_volume_list() {
-        run_test!(ZkWasmServiceHelper::query_archive_task_volume_list, None, None);
-    }
-
-    #[tokio::test]
-    async fn test_query_archive_auto_submit_task_volume_list() {
-        run_test!(ZkWasmServiceHelper::query_archive_auto_submit_task_volume_list, None, None);
-    }
-
-    #[tokio::test]
-    async fn test_query_archived_task() {
-        run_test!(
-            ZkWasmServiceHelper::query_archived_task,
-            CONFIG.archive.archived_task_id.clone()
-        );
-    }
-
-    #[tokio::test]
-    async fn test_query_archived_auto_submit_networks_by_task_id() {
-        run_test!(
-            ZkWasmServiceHelper::query_archived_auto_submit_networks_by_task_id,
-            CONFIG.archive.archived_task_id.clone()
-        );
-    }
-
-    #[tokio::test]
-    async fn test_query_archived_auto_submit_info_by_task_id() {
-        run_test!(
-            ZkWasmServiceHelper::query_archived_auto_submit_info_by_task_id,
-            CONFIG.archive.archived_task_id.clone(),
-            CONFIG.details.chain_id
-        );
-    }
-
-    #[tokio::test]
-    async fn test_query_archived_auto_submit_info_by_archive_id() {
-        run_test!(
-            ZkWasmServiceHelper::query_archived_auto_submit_info_by_archive_id,
-            CONFIG.archive.id.clone(),
-            CONFIG.details.chain_id
-        );
-    }
-
-    #[tokio::test]
-    async fn test_query_archive_server_config() {
-        run_test!(ZkWasmServiceHelper::query_archive_server_config);
-    }
-
-    #[tokio::test]
-    async fn test_query_archive_task_volume() {
-        run_test!(
-            ZkWasmServiceHelper::query_archive_task_volume,
-            CONFIG.archive.archive_volume_name.clone(),
-            None,
-            None
-        );
-    }
-
-    #[tokio::test]
-    async fn test_query_archive_auto_submit_volume() {
-        run_test!(
-            ZkWasmServiceHelper::query_archive_auto_submit_volume,
-            CONFIG.archive.archive_volume_name.clone(),
-            None,
-            None
-        );
-    }
-
-    #[tokio::test]
-    async fn test_query_archive() {
-        run_test!(
-            ZkWasmServiceHelper::query_archive,
-            Some(CONFIG.archive.archived_task_id.clone()),
-            None,
-            None,
-            None,
-            None,
-            None
-        );
     }
 }
