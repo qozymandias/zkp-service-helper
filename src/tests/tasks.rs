@@ -63,7 +63,7 @@ async fn wait_for_done_task(id: &str) {
     }
 }
 
-async fn run_setup_image() -> anyhow::Result<String> {
+async fn run_setup_image() -> anyhow::Result<(String, String)> {
     let (buffer, md5) = read_wasm(CONFIG.tasks.image.clone())?;
 
     let res = run_test!(
@@ -82,7 +82,7 @@ async fn run_setup_image() -> anyhow::Result<String> {
         crate::interface::InitialContext::Without,
         CONFIG.details.private_key.clone(),
     );
-    Ok(res.md5)
+    Ok((res.id, res.md5))
 }
 
 async fn run_prove_image(md5: String) -> anyhow::Result<String> {
@@ -129,7 +129,8 @@ async fn run_modify_image(md5: String) -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_basic_image_operations_sequentially() {
     println!("Running Setup ...");
-    let md5 = run_setup_image().await.expect("Should be able to setup image");
+    let (id, md5) = run_setup_image().await.expect("Should be able to setup image");
+    wait_for_done_task(&id).await;
     tokio::time::sleep(std::time::Duration::from_secs(2)).await;
 
     println!("Running Prove ...");
@@ -138,7 +139,8 @@ async fn test_basic_image_operations_sequentially() {
     tokio::time::sleep(std::time::Duration::from_secs(2)).await;
 
     println!("Running Reset ...");
-    run_reset_image(md5.clone()).await.expect("Should be able to reset image");
+    let id = run_reset_image(md5.clone()).await.expect("Should be able to reset image");
+    wait_for_done_task(&id).await;
     tokio::time::sleep(std::time::Duration::from_secs(2)).await;
 
     println!("Running Modify ...");
