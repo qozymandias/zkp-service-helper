@@ -1,8 +1,8 @@
 {
     "details": {
-        "server_url": "https://rpc.zkwasmhub.com:8090",
-        "private_key": "0x",
-        "chain_id": 0
+        "server_url": "http://138.217.142.94:8108",
+        "private_key": "0000000000000000000000000000000000000000000000000000000000000000",
+        "chain_id": 10143
     },
     "verify": {
         "provider_url": "https://data-seed-prebsc-1-s3.binance.org:8545",
@@ -10,17 +10,18 @@
     },
     "query": {
         "task_id": "68709dcc0a7b4ac8c109b12a",
-        "md5": "4CB1FBCCEC0C107C41405FC1FB380799",
-        "image": "./data/4CB1FBCCEC0C107C41405FC1FB380799.wasm",
+        "md5": "5240DD2F488A9348E1A174AFE9C274B3",
         "node_address": "0x3552f5e0bfccf79a87a304e80455b368af9b56f6"
     },
     "auto_submit": {
-        "id": "68706aab0a7b4ac8c109b0eb",
+        "round1_id": "68706a310a7b4ac8c109b0ea",
+        "round2_id": "68706aab0a7b4ac8c109b0eb",
         "task_id_in_auto_submit_batch": "687059020a7b4ac8c109b0ba"
     },
     "archive": {
-        "id": "000000000000000000000000",
-        "archived_task_id": "000000000000000000000000",
+        "server_url": "http://138.217.142.94:8108",
+        "id": "68709dcc0a7b4ac8c109b12a",
+        "archived_task_id": "68709dcc0a7b4ac8c109b12a",
         "archive_volume_name": "vol_1"
     },
     "tasks": {

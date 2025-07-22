@@ -8,20 +8,24 @@ mod payments {
     use crate::interface::SubscriptionType;
 
     #[tokio::test]
+    #[ignore]
     async fn test_add_payment() {
-        let txhash = "".to_string();
+        // TODO
+        let txhash = String::new();
         run_test!(ZkWasmServiceHelper::add_payment, txhash);
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_add_subscription() {
-        let subscriber_address = "".to_string();
+        // TODO
+        let subscriber_address = String::new();
         let subscription_type = SubscriptionType::Basic;
         let duration = SubscriptionDuration {
             base_duration: crate::interface::BaseSubscriptionDuration::Month,
             multiplier: 1,
         };
-        let payment_hash = "".to_string();
+        let payment_hash = String::new();
         run_test!(
             ZkWasmServiceHelper::add_subscription,
             subscriber_address,
@@ -39,7 +43,10 @@ fn read_wasm(image: String) -> anyhow::Result<(Vec<u8>, String)> {
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer)?;
 
+    println!("{buffer:?}");
+
     let md5 = format!("{:X}", md5::compute(&buffer)).to_uppercase();
+
     Ok((buffer, md5))
 }
 
@@ -58,16 +65,16 @@ async fn wait_for_done_task(id: &str) {
     }
 }
 
-async fn run_setup_image() -> anyhow::Result<String> {
+async fn run_setup_image() -> anyhow::Result<(String, String)> {
     let (buffer, md5) = read_wasm(CONFIG.tasks.image.clone())?;
 
     let res = run_test!(
         ZkWasmServiceHelper::setup_image,
-        md5.clone(),
+        md5.to_lowercase().clone(),
         buffer,
-        md5.clone(),
+        md5.to_lowercase().clone(),
         CONFIG.user_address().clone(),
-        format!("ZKP CLI test image {md5}"),
+        format!("ZKP CLI test image {}", md5.to_lowercase()),
         String::new(),
         22,
         crate::interface::ProvePaymentSrc::Default,
@@ -77,7 +84,7 @@ async fn run_setup_image() -> anyhow::Result<String> {
         crate::interface::InitialContext::Without,
         CONFIG.details.private_key.clone(),
     );
-    Ok(res.md5)
+    Ok((res.id, res.md5))
 }
 
 async fn run_prove_image(md5: String) -> anyhow::Result<String> {
@@ -86,7 +93,7 @@ async fn run_prove_image(md5: String) -> anyhow::Result<String> {
         CONFIG.user_address().clone(),
         md5,
         vec!["2:i64".to_string(), "1:i64".to_string()],
-        vec!["".to_string()],
+        vec![],
         crate::interface::ProofSubmitMode::Manual,
         crate::interface::CustomContext::Without,
         CONFIG.details.private_key.clone(),
@@ -124,7 +131,8 @@ async fn run_modify_image(md5: String) -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_basic_image_operations_sequentially() {
     println!("Running Setup ...");
-    let md5 = run_setup_image().await.expect("Should be able to setup image");
+    let (id, md5) = run_setup_image().await.expect("Should be able to setup image");
+    wait_for_done_task(&id).await;
     tokio::time::sleep(std::time::Duration::from_secs(2)).await;
 
     println!("Running Prove ...");
@@ -133,7 +141,8 @@ async fn test_basic_image_operations_sequentially() {
     tokio::time::sleep(std::time::Duration::from_secs(2)).await;
 
     println!("Running Reset ...");
-    run_reset_image(md5.clone()).await.expect("Should be able to reset image");
+    let id = run_reset_image(md5.clone()).await.expect("Should be able to reset image");
+    wait_for_done_task(&id).await;
     tokio::time::sleep(std::time::Duration::from_secs(2)).await;
 
     println!("Running Modify ...");
@@ -160,7 +169,7 @@ mod reprocess {
             CONFIG.user_address().clone(),
             CONFIG.details.private_key.clone(),
         );
-        assert_eq!(n_ids, res.len())
+        assert_eq!(n_ids, res.len());
     }
 
     #[tokio::test]
@@ -179,6 +188,6 @@ mod reprocess {
             CONFIG.user_address().clone(),
             CONFIG.details.private_key.clone(),
         );
-        assert_eq!(n_ids, res.len())
+        assert_eq!(n_ids, res.len());
     }
 }

@@ -1,4 +1,5 @@
-#![allow(dead_code, non_snake_case)]
+#![allow(non_snake_case, clippy::pub_underscore_fields)]
+
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -11,7 +12,7 @@ pub struct PaginationResult<T: Serialize> {
     pub total: u64,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub struct ObjectId {
     #[serde(rename = "$oid")]
     pub oid: String,
@@ -30,34 +31,34 @@ pub struct StatisticsInfo {
     pub total_deployed: u64,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub struct TimingStatistics {
-    pub latest_time_taken_secs: u64,
-    pub latest_timestamp: String,
-    pub latest_task_id: ObjectId,
+    pub latest_time_taken_secs: f64,
+    pub latest_timestamp: Option<String>,
+    pub latest_task_id: Option<ObjectId>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub struct NodeStatistics {
     pub successful_tasks: u64,
     pub failed_tasks: u64,
     pub total_tasks: u64,
     pub timed_out_count: u64,
-    pub last_timed_out: String,
+    pub last_timed_out: Option<String>,
     pub last_timed_out_task_id: Option<ObjectId>,
-    pub last_failed_ts: String,
+    pub last_failed_ts: Option<String>,
     pub last_failed_task_id: Option<ObjectId>,
     pub last_failed_task_log: Option<String>,
     pub setup_timing_stats: Option<TimingStatistics>,
     pub proof_timing_stats: Option<TimingStatistics>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub struct VersionInfo {
     pub version: String,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub enum ProverLevel {
     Inactive,
     Intern,
@@ -65,13 +66,13 @@ pub enum ProverLevel {
     Certified,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub struct LastAttemptedTask {
     pub task_id: ObjectId,
     pub timestamp: String,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub struct OnlineNodeInfo {
     pub address: String,
     pub prover_level: ProverLevel,
@@ -80,7 +81,7 @@ pub struct OnlineNodeInfo {
     pub online: bool,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub struct ProverNode {
     pub address: String,
     pub statistics: NodeStatistics,
@@ -114,14 +115,14 @@ pub struct NodeStatisticsQueryParams {
     pub total: Option<u64>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub enum InputContextType {
     Custom,
     ImageInitial,
     ImageCurrent,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub enum CompressionType {
     None,
     GZip,
@@ -129,7 +130,7 @@ pub enum CompressionType {
 
 pub type ContextHexString = String;
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub enum TaskStatus {
     Pending,
     Processing,
@@ -141,40 +142,40 @@ pub enum TaskStatus {
     Stale,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct VerifierContracts {
     pub chain_id: u32,
     pub aggregator_verifier: String,
-    pub batch_verifier: String,
+    pub batch_verifier: Option<String>,
     pub circuit_size: u32,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct TaskVerificationData {
     pub static_file_checksum: Vec<u8>,
     pub verifier_contracts: Vec<VerifierContracts>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub enum ProofSubmitMode {
     Manual,
     Auto,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct AutoSubmitBatchMetadata {
     pub chain_id: u32,
     pub id: String,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct BatchProofData {
     pub round_1_batch_ids: Option<Vec<AutoSubmitBatchMetadata>>,
     pub round_2_batch_ids: Option<Vec<AutoSubmitBatchMetadata>>,
     pub final_proof_batch_ids: Option<Vec<AutoSubmitBatchMetadata>>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub enum AutoSubmitStatus {
     Round1,
     Round2,
@@ -183,32 +184,32 @@ pub enum AutoSubmitStatus {
     Failed,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct Task {
     pub user_address: String,
     pub node_address: Option<String>,
-    pub md5: String,
-    pub task_type: String,
+    pub _id: ObjectId,
     pub status: TaskStatus,
-    pub single_proof: Vec<u8>,
-    pub proof: Vec<u8>,
-    pub aux: Vec<u8>,
-    pub shadow_instances: Vec<u8>,
-    pub batch_instances: Vec<u8>,
-    pub instances: Vec<u8>,
+    pub md5: String,
+    pub task_type: TaskType,
     pub public_inputs: Vec<String>,
     pub private_inputs: Vec<String>,
+    pub single_proof: Vec<u8>,
+    pub proof: Vec<u8>,
+    pub batch_instances: Vec<u8>,
+    pub shadow_instances: Vec<u8>,
+    pub instances: Vec<u8>,
+    pub aux: Vec<u8>,
     pub input_context: Vec<u8>,
     pub input_context_type: Option<InputContextType>,
     pub output_context: Vec<u8>,
-    pub _id: ObjectId,
     pub submit_time: String,
     pub process_started: Option<String>,
     pub process_finished: Option<String>,
     pub task_fee: Option<Vec<u8>>,
     pub status_message: Option<String>,
     pub internal_message: Option<String>,
-    pub guest_statics: Option<u64>,
+    pub guest_statics: Option<u32>,
     pub task_verification_data: TaskVerificationData,
     pub debug_logs: Option<String>,
     pub proof_submit_mode: Option<ProofSubmitMode>,
@@ -217,12 +218,12 @@ pub struct Task {
     pub compression: Option<CompressionType>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub struct ConciseTask {
     pub _id: ObjectId,
     pub user_address: String,
     pub md5: String,
-    pub task_type: String,
+    pub task_type: TaskType,
     pub status: TaskStatus,
     pub submit_time: String,
     pub process_started: Option<String>,
@@ -358,7 +359,7 @@ pub struct Round2InfoQuery {
     pub chain_id: Option<u32>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub enum TaskType {
     Setup,
     Prove,
@@ -387,22 +388,24 @@ pub enum AddProveTaskRestrictions {
 #[derive(Deserialize, Serialize)]
 pub struct BaseAddImageParams {
     pub name: String,
-    pub image: Vec<u8>,
     pub image_md5: String,
+    pub image: Vec<u8>,
     pub user_address: String,
     pub description_url: String,
     pub avator_url: String,
     pub circuit_size: u32,
     pub prove_payment_src: ProvePaymentSrc,
     pub auto_submit_network_ids: Vec<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub add_prove_task_restrictions: Option<AddProveTaskRestrictions>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub inherited_merkle_data_md5: Option<String>,
 }
 
 #[derive(Deserialize, Serialize)]
 pub struct WithInitialContext {
-    pub initial_context: Vec<u8>,
     pub initial_context_md5: String,
+    pub initial_context: Vec<u8>,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -472,6 +475,7 @@ pub struct BaseResetImageParams {
     pub user_address: String,
     pub prove_payment_src: ProvePaymentSrc,
     pub auto_submit_network_ids: Vec<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub add_prove_task_restrictions: Option<AddProveTaskRestrictions>,
 }
 
@@ -540,8 +544,8 @@ pub struct QueryParams {
     pub user_address: Option<String>,
     pub md5: Option<String>,
     pub id: Option<String>,
-    pub tasktype: Option<String>,
-    pub taskstatus: Option<String>,
+    pub tasktype: Option<TaskType>,
+    pub taskstatus: Option<TaskStatus>,
     pub start: Option<u64>,
     pub total: Option<u64>,
 }
@@ -652,15 +656,13 @@ pub struct ServerVersionInfo {
 
 #[derive(Deserialize, Serialize)]
 pub struct AppConfig {
-    pub receiver_address: String,
     pub deployer_address: String,
+    pub receiver_address: String,
     pub task_fee_list: TaskFeeList,
     pub chain_info_list: Vec<ChainInfo>,
     pub latest_server_checksum: Vec<u8>,
     pub topup_token_params: TokenParams,
     pub topup_token_data: TokenData,
-    pub deployments: Vec<ContractDeployments>,
-    pub subscription_plans: Vec<SubscriptionParams>,
     pub supported_auto_submit_network_ids: Vec<u32>,
     pub server_version_info: ServerVersionInfo,
 }
@@ -815,8 +817,8 @@ pub struct EstimatedProofFeeParams {
 
 #[derive(Deserialize, Serialize)]
 pub struct EstimatedProofFee {
-    pub min: Option<u64>,
-    pub max: Option<u64>,
+    pub min: Option<ethers::types::U256>,
+    pub max: Option<ethers::types::U256>,
     pub msg: String,
 }
 
