@@ -14,9 +14,9 @@
         "node_address": "0x3552f5e0bfccf79a87a304e80455b368af9b56f6"
     },
     "auto_submit": {
-        "round1_id": "68706a310a7b4ac8c109b0ea",
-        "round2_id": "68706aab0a7b4ac8c109b0eb",
-        "task_id_in_auto_submit_batch": "687059020a7b4ac8c109b0ba"
+        "round1_id": "68806118f5977aee797834c1",
+        "round2_id": "68806191f5977aee797834c2",
+        "task_id_in_auto_submit_batch": "688048e3f5977aee797834b0"
     },
     "archive": {
         "server_url": "http://138.217.142.94:8108",
@@ -25,7 +25,6 @@
         "archive_volume_name": "vol_1"
     },
     "tasks": {
-        "md5": "4CB1FBCCEC0C107C41405FC1FB380799",
-        "image": "./data/4CB1FBCCEC0C107C41405FC1FB380799.wasm"
+        "image": "./data/image.wasm"
     }
 }

@@ -43,10 +43,7 @@ fn read_wasm(image: String) -> anyhow::Result<(Vec<u8>, String)> {
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer)?;
 
-    println!("{buffer:?}");
-
     let md5 = format!("{:X}", md5::compute(&buffer)).to_uppercase();
-
     Ok((buffer, md5))
 }
 

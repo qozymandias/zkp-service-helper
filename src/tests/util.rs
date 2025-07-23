@@ -38,7 +38,6 @@ pub(super) struct ArchiveConfig {
 
 #[derive(Deserialize, Serialize)]
 pub(super) struct TasksConfig {
-    pub md5: String,
     pub image: String,
 }
 
