@@ -69,7 +69,7 @@ async fn test_query_archive_task_volume() {
 async fn test_query_archive_auto_submit_volume() {
     run_archive_test!(
         ZkWasmServiceHelper::query_archive_auto_submit_volume,
-        CONFIG.archive.archive_volume_name.clone(),
+        CONFIG.archive.archive_auto_submit_volume_name.clone(),
         None,
         None
     );

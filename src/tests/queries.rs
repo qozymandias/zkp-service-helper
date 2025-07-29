@@ -30,41 +30,46 @@ async fn test_query_user() {
 #[tokio::test]
 async fn test_query_user_subscription() {
     let addr = CONFIG.user_address();
-    let _res = run_test!(ZkWasmServiceHelper::query_user_subscription, addr.clone());
-    #[cfg(feature = "pedantic-tests")]
-    {
-        let res = _res.expect("Should exist in db");
-        assert_eq!(addr, res.subscriber_address);
+    let res = run_test!(ZkWasmServiceHelper::query_user_subscription, addr.clone());
+    if CONFIG.details.pedantic_checks {
+        assert_eq!(addr, res.expect("Should exist in db").subscriber_address);
     }
 }
 
 #[tokio::test]
 async fn test_query_tx_history() {
-    let _res = run_test!(ZkWasmServiceHelper::query_tx_history, CONFIG.user_address());
-    #[cfg(feature = "pedantic-tests")]
-    check_paginated_res(&_res);
+    let res = run_test!(ZkWasmServiceHelper::query_tx_history, CONFIG.user_address());
+    if CONFIG.details.pedantic_checks {
+        check_paginated_res(&res);
+    }
 }
 
 #[tokio::test]
 async fn test_query_deposit_history() {
-    let _res = run_test!(ZkWasmServiceHelper::query_deposit_history, CONFIG.user_address());
-    #[cfg(feature = "pedantic-tests")]
-    check_paginated_res(&_res);
+    let res = run_test!(ZkWasmServiceHelper::query_deposit_history, CONFIG.user_address());
+    if CONFIG.details.pedantic_checks {
+        check_paginated_res(&res);
+    }
 }
 
 #[tokio::test]
 async fn test_query_config() {
-    run_test!(ZkWasmServiceHelper::query_config);
+    let res = run_test!(ZkWasmServiceHelper::query_config);
+    assert!(!res.chain_info_list.is_empty());
+    assert!(!res.supported_auto_submit_network_ids.is_empty());
 }
 
 #[tokio::test]
 async fn test_query_statistics() {
-    run_test!(ZkWasmServiceHelper::query_statistics);
+    let res = run_test!(ZkWasmServiceHelper::query_statistics);
+    assert!(res.total_tasks > 0);
+    assert!(res.total_images > 0);
+    assert!(res.total_proofs > 0);
 }
 
 #[tokio::test]
 async fn test_query_node_statistics() {
-    let res = run_test!(ZkWasmServiceHelper::query_node_statistics, None, Some(0), Some(5));
+    let res = run_test!(ZkWasmServiceHelper::query_node_statistics, None, None, None);
     check_paginated_res(&res);
 }
 
@@ -78,12 +83,22 @@ async fn test_query_node_statistics_by_address() {
 
 #[tokio::test]
 async fn test_query_prover_node_summary() {
-    run_test!(ZkWasmServiceHelper::query_prover_node_summary);
+    let res = run_test!(ZkWasmServiceHelper::query_prover_node_summary);
+    assert!(res.certified_prover_count > 0);
+    assert!(res.active_prover_count > 0);
+    assert!(res.intern_prover_count > 0);
+    assert!(res.inactive_prover_count > 0);
 }
 
 #[tokio::test]
 async fn test_query_online_node_summary() {
-    run_test!(ZkWasmServiceHelper::query_online_node_summary);
+    let res = run_test!(ZkWasmServiceHelper::query_online_node_summary);
+    if CONFIG.details.pedantic_checks {
+        assert!(!res.certified.is_empty());
+        assert!(!res.active.is_empty());
+        assert!(!res.intern.is_empty());
+        assert!(!res.inactive.is_empty());
+    }
 }
 
 #[tokio::test]
@@ -105,8 +120,8 @@ async fn test_query_estimated_proof_fee() {
         CONFIG.query.md5.clone(),
         crate::interface::ProofSubmitMode::Auto,
     );
-    assert!(res.min.is_some());
-    assert!(res.max.is_some());
+    assert!(res.min.is_some_and(|v| !v.is_zero()));
+    assert!(res.max.is_some_and(|v| !v.is_zero()));
 }
 
 #[tokio::test]
