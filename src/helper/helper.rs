@@ -346,6 +346,7 @@ impl ZkWasmServiceHelper {
     pub async fn query_round1_info(
         &self,
         id: Option<String>,
+        auto_submit_queue_id : Option<String>,
         task_id: Option<String>,
         status: Option<Round1Status>,
         circuit_size: Option<u32>,
@@ -359,6 +360,8 @@ impl ZkWasmServiceHelper {
                 PaginatedQuery {
                     query: Round1InfoQuery {
                         id,
+                        // Note: `round_1_id` should never be used because it's never exposed to the user.
+                        round_1_id: auto_submit_queue_id,
                         task_id,
                         status,
                         circuit_size,

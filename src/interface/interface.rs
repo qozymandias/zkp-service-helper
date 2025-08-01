@@ -344,6 +344,7 @@ pub struct AutoSubmitProofQuery {
 #[derive(Deserialize, Serialize)]
 pub struct Round1InfoQuery {
     pub id: Option<String>,
+    pub round_1_id: Option<String>,
     pub task_id: Option<String>,
     pub status: Option<Round1Status>,
     pub circuit_size: Option<u32>,
