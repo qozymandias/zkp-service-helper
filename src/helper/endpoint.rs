@@ -1,9 +1,9 @@
 use serde::Deserialize;
 use serde::Serialize;
 
-use super::TaskEndpoint;
-use super::util::SerializationAttributes;
 use super::util::into_multipart_form;
+use super::util::SerializationAttributes;
+use super::TaskEndpoint;
 
 #[derive(Deserialize, Serialize)]
 pub struct RequestResult<T: Serialize> {
@@ -36,9 +36,8 @@ impl ZkWasmServiceEndpoint {
         let url = format!("{}{}{}", base, if encoded.is_empty() { "" } else { "?" }, encoded);
         println!("GET {url}");
 
-        let client = reqwest::Client::new();
-        let req = client.get(url);
-        Self::execute(client, req, signature).await
+        let req = reqwest::Client::new().get(url);
+        Self::execute(req, signature).await
     }
 
     pub async fn post<U: Serialize + SerializationAttributes, V: for<'de> Deserialize<'de> + Serialize>(
@@ -50,9 +49,8 @@ impl ZkWasmServiceEndpoint {
         let url = self.to_path(&path);
         println!("POST {url}");
 
-        let client = reqwest::Client::new();
-        let req = client.post(url).multipart(into_multipart_form(params)?);
-        Self::execute(client, req, signature).await
+        let req = reqwest::Client::new().post(url).multipart(into_multipart_form(params)?);
+        Self::execute(req, signature).await
     }
 
     pub async fn post_json_body<U: Serialize + SerializationAttributes, V: for<'de> Deserialize<'de> + Serialize>(
@@ -64,13 +62,11 @@ impl ZkWasmServiceEndpoint {
         let url = self.to_path(&path);
         println!("POST {url}");
 
-        let client = reqwest::Client::new();
-        let req = client.post(url).json(&params);
-        Self::execute(client, req, signature).await
+        let req = reqwest::Client::new().post(url).json(&params);
+        Self::execute(req, signature).await
     }
 
     async fn execute<V: for<'de> Deserialize<'de> + Serialize>(
-        client: reqwest::Client,
         mut req: reqwest::RequestBuilder,
         signature: Option<String>,
     ) -> anyhow::Result<V> {
@@ -78,8 +74,8 @@ impl ZkWasmServiceEndpoint {
             req = req.header("x-eth-signature", sig);
         }
 
-        Ok(client
-            .execute(req.build()?)
+        Ok(req
+            .send()
             .await?
             .text()
             .await

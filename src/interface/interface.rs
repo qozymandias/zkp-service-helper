@@ -115,14 +115,14 @@ pub struct NodeStatisticsQueryParams {
     pub total: Option<u64>,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub enum InputContextType {
     Custom,
     ImageInitial,
     ImageCurrent,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub enum CompressionType {
     None,
     GZip,
@@ -142,7 +142,7 @@ pub enum TaskStatus {
     Stale,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub struct VerifierContracts {
     pub chain_id: u32,
     pub aggregator_verifier: String,
@@ -150,7 +150,7 @@ pub struct VerifierContracts {
     pub circuit_size: u32,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub struct TaskVerificationData {
     pub static_file_checksum: Vec<u8>,
     pub verifier_contracts: Vec<VerifierContracts>,
@@ -162,13 +162,13 @@ pub enum ProofSubmitMode {
     Auto,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub struct AutoSubmitBatchMetadata {
     pub chain_id: u32,
     pub id: String,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub struct BatchProofData {
     pub round_1_batch_ids: Option<Vec<AutoSubmitBatchMetadata>>,
     pub round_2_batch_ids: Option<Vec<AutoSubmitBatchMetadata>>,
@@ -184,7 +184,7 @@ pub enum AutoSubmitStatus {
     Failed,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub struct Task {
     pub user_address: String,
     pub node_address: Option<String>,
@@ -238,19 +238,19 @@ pub struct TaskExternalHostTable {
     pub compression: Option<CompressionType>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub struct StaticFileVerificationData {
     pub static_file_checksum: Vec<u8>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub enum AutoSubmitProofStatus {
     Pending,
     Batched,
     Failed,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub struct AutoSubmitProof {
     pub _id: Option<ObjectId>,
     pub task_id: String,
@@ -267,14 +267,14 @@ pub struct AutoSubmitProof {
     pub status: AutoSubmitProofStatus,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub enum Round1Status {
     Pending,
     Batched,
     Failed,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub struct Round1Info {
     pub _id: Option<ObjectId>,
     pub round_1_ids: Vec<String>,
@@ -293,13 +293,13 @@ pub struct Round1Info {
     pub status: Round1Status,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub enum Round2Status {
     ProofNotRegistered,
     ProofRegistered,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub struct Round2Info {
     pub _id: Option<ObjectId>,
     pub round_2_ids: Vec<String>,
@@ -344,6 +344,7 @@ pub struct AutoSubmitProofQuery {
 #[derive(Deserialize, Serialize)]
 pub struct Round1InfoQuery {
     pub id: Option<String>,
+    pub round_1_id: Option<String>,
     pub task_id: Option<String>,
     pub status: Option<Round1Status>,
     pub circuit_size: Option<u32>,

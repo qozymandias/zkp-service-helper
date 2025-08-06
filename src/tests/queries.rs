@@ -6,6 +6,7 @@ use crate::run_test;
 fn check_paginated_res<T: Serialize>(res: &crate::interface::PaginationResult<Vec<T>>) {
     assert!(!res.data.is_empty());
     assert!(usize::try_from(res.total).expect("Should convert") >= res.data.len());
+    println!("\tData len {}, Total {}", res.data.len(), res.total);
 }
 
 #[tokio::test]
@@ -30,41 +31,46 @@ async fn test_query_user() {
 #[tokio::test]
 async fn test_query_user_subscription() {
     let addr = CONFIG.user_address();
-    let _res = run_test!(ZkWasmServiceHelper::query_user_subscription, addr.clone());
-    #[cfg(feature = "pedantic-tests")]
-    {
-        let res = _res.expect("Should exist in db");
-        assert_eq!(addr, res.subscriber_address);
+    let res = run_test!(ZkWasmServiceHelper::query_user_subscription, addr.clone());
+    if CONFIG.details.pedantic_checks {
+        assert_eq!(addr, res.expect("Should exist in db").subscriber_address);
     }
 }
 
 #[tokio::test]
 async fn test_query_tx_history() {
-    let _res = run_test!(ZkWasmServiceHelper::query_tx_history, CONFIG.user_address());
-    #[cfg(feature = "pedantic-tests")]
-    check_paginated_res(&_res);
+    let res = run_test!(ZkWasmServiceHelper::query_tx_history, CONFIG.user_address());
+    if CONFIG.details.pedantic_checks {
+        check_paginated_res(&res);
+    }
 }
 
 #[tokio::test]
 async fn test_query_deposit_history() {
-    let _res = run_test!(ZkWasmServiceHelper::query_deposit_history, CONFIG.user_address());
-    #[cfg(feature = "pedantic-tests")]
-    check_paginated_res(&_res);
+    let res = run_test!(ZkWasmServiceHelper::query_deposit_history, CONFIG.user_address());
+    if CONFIG.details.pedantic_checks {
+        check_paginated_res(&res);
+    }
 }
 
 #[tokio::test]
 async fn test_query_config() {
-    run_test!(ZkWasmServiceHelper::query_config);
+    let res = run_test!(ZkWasmServiceHelper::query_config);
+    assert!(!res.chain_info_list.is_empty());
+    assert!(!res.supported_auto_submit_network_ids.is_empty());
 }
 
 #[tokio::test]
 async fn test_query_statistics() {
-    run_test!(ZkWasmServiceHelper::query_statistics);
+    let res = run_test!(ZkWasmServiceHelper::query_statistics);
+    assert!(res.total_tasks > 0);
+    assert!(res.total_images > 0);
+    assert!(res.total_proofs > 0);
 }
 
 #[tokio::test]
 async fn test_query_node_statistics() {
-    let res = run_test!(ZkWasmServiceHelper::query_node_statistics, None, Some(0), Some(5));
+    let res = run_test!(ZkWasmServiceHelper::query_node_statistics, None, None, None);
     check_paginated_res(&res);
 }
 
@@ -78,12 +84,22 @@ async fn test_query_node_statistics_by_address() {
 
 #[tokio::test]
 async fn test_query_prover_node_summary() {
-    run_test!(ZkWasmServiceHelper::query_prover_node_summary);
+    let res = run_test!(ZkWasmServiceHelper::query_prover_node_summary);
+    assert!(res.certified_prover_count > 0);
+    assert!(res.active_prover_count > 0);
+    assert!(res.intern_prover_count > 0);
+    assert!(res.inactive_prover_count > 0);
 }
 
 #[tokio::test]
 async fn test_query_online_node_summary() {
-    run_test!(ZkWasmServiceHelper::query_online_node_summary);
+    let res = run_test!(ZkWasmServiceHelper::query_online_node_summary);
+    if CONFIG.details.pedantic_checks {
+        assert!(!res.certified.is_empty());
+        assert!(!res.active.is_empty());
+        assert!(!res.intern.is_empty());
+        assert!(!res.inactive.is_empty());
+    }
 }
 
 #[tokio::test]
@@ -105,8 +121,8 @@ async fn test_query_estimated_proof_fee() {
         CONFIG.query.md5.clone(),
         crate::interface::ProofSubmitMode::Auto,
     );
-    assert!(res.min.is_some());
-    assert!(res.max.is_some());
+    assert!(res.min.is_some_and(|v| !v.is_zero()));
+    assert!(res.max.is_some_and(|v| !v.is_zero()));
 }
 
 #[tokio::test]
@@ -236,7 +252,7 @@ mod task {
     #[tokio::test]
     async fn test_query_tasks_from_id() {
         let id = CONFIG.query.task_id.clone();
-        let res = run_test!(ZkWasmServiceHelper::query_tasks_from_id, id.clone()).expect("Task should exist");
+        let res = run_test!(ZkWasmServiceHelper::query_task_from_id, id.clone()).expect("Task should exist");
         assert_eq!(id, res._id.oid);
     }
 
@@ -342,11 +358,11 @@ mod auto_submit {
 
     #[tokio::test]
     async fn test_query_auto_submit_proofs_by_task_id() {
-        let id = CONFIG.auto_submit.task_id_in_auto_submit_batch.clone();
+        let task_id = CONFIG.auto_submit.task_id_in_auto_submit_batch.clone();
         let res = run_test!(
             ZkWasmServiceHelper::query_auto_submit_proofs,
             None,
-            Some(id.clone()),
+            Some(task_id.clone()),
             None,
             None,
             None,
@@ -354,7 +370,7 @@ mod auto_submit {
             None,
         );
         check_paginated_res(&res);
-        assert_eq!(id, res.data[0].task_id);
+        assert_eq!(task_id, res.data[0].task_id);
     }
 
     #[tokio::test]
@@ -394,11 +410,27 @@ mod auto_submit {
     }
 
     #[tokio::test]
+    async fn test_query_round2_info_by_empty_request() {
+        let res = run_test!(
+            ZkWasmServiceHelper::query_round2_info,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        );
+        check_paginated_res(&res);
+    }
+
+    #[tokio::test]
     async fn test_query_round1_info_by_id() {
         let id = CONFIG.auto_submit.round1_id.clone();
         let res = run_test!(
             ZkWasmServiceHelper::query_round1_info,
             Some(id.clone()),
+            None,
             None,
             None,
             None,
@@ -412,11 +444,12 @@ mod auto_submit {
 
     #[tokio::test]
     async fn test_query_round1_info_by_task_id() {
-        let id = CONFIG.auto_submit.task_id_in_auto_submit_batch.clone();
+        let task_id = CONFIG.auto_submit.task_id_in_auto_submit_batch.clone();
         let res = run_test!(
             ZkWasmServiceHelper::query_round1_info,
             None,
-            Some(id.clone()),
+            None,
+            Some(task_id.clone()),
             None,
             None,
             None,
@@ -424,13 +457,14 @@ mod auto_submit {
             None,
         );
         check_paginated_res(&res);
-        assert!(res.data[0].task_ids.contains(&id));
+        assert!(res.data[0].task_ids.contains(&task_id));
     }
 
     #[tokio::test]
     async fn test_query_round1_info_by_status() {
         let res = run_test!(
             ZkWasmServiceHelper::query_round1_info,
+            None,
             None,
             None,
             Some(crate::interface::Round1Status::Batched),
@@ -451,6 +485,7 @@ mod auto_submit {
         let chain_id = CONFIG.details.chain_id;
         let res = run_test!(
             ZkWasmServiceHelper::query_round1_info,
+            None,
             None,
             None,
             None,
@@ -481,20 +516,37 @@ mod auto_submit {
     }
 
     #[tokio::test]
-    async fn test_query_round2_info_by_task_id() {
-        let id = CONFIG.auto_submit.task_id_in_auto_submit_batch.clone();
+    async fn test_query_round2_info_by_round_1_id() {
+        let round1_id = CONFIG.auto_submit.round1_id.clone();
         let res = run_test!(
             ZkWasmServiceHelper::query_round2_info,
             None,
+            Some(round1_id.clone()),
             None,
-            Some(id.clone()),
             None,
             None,
             None,
             None,
         );
         check_paginated_res(&res);
-        assert!(res.data[0].task_ids.contains(&id));
+        assert!(res.data[0].round_2_ids.contains(&round1_id));
+    }
+
+    #[tokio::test]
+    async fn test_query_round2_info_by_task_id() {
+        let task_id = CONFIG.auto_submit.task_id_in_auto_submit_batch.clone();
+        let res = run_test!(
+            ZkWasmServiceHelper::query_round2_info,
+            None,
+            None,
+            Some(task_id.clone()),
+            None,
+            None,
+            None,
+            None,
+        );
+        check_paginated_res(&res);
+        assert!(res.data[0].task_ids.contains(&task_id));
     }
 
     #[tokio::test]
@@ -520,7 +572,7 @@ mod auto_submit {
     async fn test_query_round2_info_by_chain_id() {
         let chain_id = CONFIG.details.chain_id;
         let res = run_test!(
-            ZkWasmServiceHelper::query_round1_info,
+            ZkWasmServiceHelper::query_round2_info,
             None,
             None,
             None,

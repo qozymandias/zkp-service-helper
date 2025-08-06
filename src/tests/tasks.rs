@@ -50,7 +50,7 @@ fn read_wasm(image: String) -> anyhow::Result<(Vec<u8>, String)> {
 async fn wait_for_done_task(id: &str) {
     loop {
         let res = ZKH
-            .query_tasks_from_id(id.to_string())
+            .query_task_from_id(id.to_string())
             .await
             .ok()
             .flatten()
@@ -58,7 +58,7 @@ async fn wait_for_done_task(id: &str) {
         if let crate::interface::TaskStatus::Done = res.status {
             break;
         }
-        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+        tokio::time::sleep(std::time::Duration::from_secs(5)).await;
     }
 }
 
@@ -67,11 +67,11 @@ async fn run_setup_image() -> anyhow::Result<(String, String)> {
 
     let res = run_test!(
         ZkWasmServiceHelper::setup_image,
-        md5.to_lowercase().clone(),
+        md5.clone(),
         buffer,
-        md5.to_lowercase().clone(),
+        md5.clone(),
         CONFIG.user_address().clone(),
-        format!("ZKP CLI test image {}", md5.to_lowercase()),
+        format!("ZKP CLI test image {md5}"),
         String::new(),
         22,
         crate::interface::ProvePaymentSrc::Default,
@@ -89,7 +89,7 @@ async fn run_prove_image(md5: String) -> anyhow::Result<String> {
         ZkWasmServiceHelper::add_prove,
         CONFIG.user_address().clone(),
         md5,
-        vec!["2:i64".to_string(), "1:i64".to_string()],
+        vec![],
         vec![],
         crate::interface::ProofSubmitMode::Manual,
         crate::interface::CustomContext::Without,
@@ -130,17 +130,14 @@ async fn test_basic_image_operations_sequentially() {
     println!("Running Setup ...");
     let (id, md5) = run_setup_image().await.expect("Should be able to setup image");
     wait_for_done_task(&id).await;
-    tokio::time::sleep(std::time::Duration::from_secs(2)).await;
 
     println!("Running Prove ...");
     let id = run_prove_image(md5.clone()).await.expect("Should be able to prove image");
     wait_for_done_task(&id).await;
-    tokio::time::sleep(std::time::Duration::from_secs(2)).await;
 
     println!("Running Reset ...");
     let id = run_reset_image(md5.clone()).await.expect("Should be able to reset image");
     wait_for_done_task(&id).await;
-    tokio::time::sleep(std::time::Duration::from_secs(2)).await;
 
     println!("Running Modify ...");
     run_modify_image(md5.clone()).await.expect("Should be able to modify image");

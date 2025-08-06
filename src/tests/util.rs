@@ -6,6 +6,7 @@ pub(super) struct DetailsConfig {
     pub server_url: String,
     pub private_key: String,
     pub chain_id: u32,
+    pub pedantic_checks: bool,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -34,6 +35,7 @@ pub(super) struct ArchiveConfig {
     pub id: String,
     pub archived_task_id: String,
     pub archive_volume_name: String,
+    pub archive_auto_submit_volume_name: String,
 }
 
 #[derive(Deserialize, Serialize)]
