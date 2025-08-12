@@ -374,13 +374,13 @@ pub enum ImageStatus {
     Verified,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub enum ProvePaymentSrc {
     Default,
     CreatorPay,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub enum AddProveTaskRestrictions {
     Anyone,
     CreatorOnly,
@@ -684,24 +684,24 @@ pub struct ChainDetails {
     pub blockExplorerUrls: Vec<String>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub struct DeploymentInfo {
     pub chain_id: u32,
     pub address: String,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub struct InheritedMerkleDataInfo {
     pub md5: String,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub struct ImageChecksum {
     pub x: Vec<u8>,
     pub y: Vec<u8>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub struct Image {
     pub user_address: String,
     pub md5: String,

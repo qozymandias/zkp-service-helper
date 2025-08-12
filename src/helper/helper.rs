@@ -1,6 +1,6 @@
+use super::util::sign_object;
 use super::TaskEndpoint;
 use super::ZkWasmServiceEndpoint;
-use super::util::sign_object;
 use crate::interface::AddImageParams;
 use crate::interface::AddProveTaskRestrictions;
 use crate::interface::AddTaskResult;
@@ -346,7 +346,7 @@ impl ZkWasmServiceHelper {
     pub async fn query_round1_info(
         &self,
         id: Option<String>,
-        auto_submit_queue_id : Option<String>,
+        auto_submit_queue_id: Option<String>,
         task_id: Option<String>,
         status: Option<Round1Status>,
         circuit_size: Option<u32>,

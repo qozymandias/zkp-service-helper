@@ -411,16 +411,7 @@ mod auto_submit {
 
     #[tokio::test]
     async fn test_query_round2_info_by_empty_request() {
-        let res = run_test!(
-            ZkWasmServiceHelper::query_round2_info,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        );
+        let res = run_test!(ZkWasmServiceHelper::query_round2_info, None, None, None, None, None, None, None,);
         check_paginated_res(&res);
     }
 
