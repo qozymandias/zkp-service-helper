@@ -579,14 +579,14 @@ pub struct LogQuery {
     pub user_address: String,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub struct TaskFeeList {
     pub setup_fee: String,
     pub prove_fee: String,
     pub auto_submit_prove_fee_per_network: String,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub struct ChainInfo {
     pub chain_id: u32,
     pub chain_name: String,
@@ -594,14 +594,14 @@ pub struct ChainInfo {
     pub deploy_fee: String,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub struct TokenParams {
     pub token_address: String,
     pub network_id: u32,
     pub topup_conversion_rate: Option<u64>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub struct TokenData {
     pub decimals: u64,
     pub symbol: String,
@@ -649,13 +649,13 @@ pub struct SubscriptionParams {
     pub enabled: bool,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub struct ServerVersionInfo {
     pub current_version: String,
     pub minimum_supported_node_version: String,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub struct AppConfig {
     pub deployer_address: String,
     pub receiver_address: String,
