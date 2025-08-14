@@ -846,14 +846,14 @@ pub struct ProverNodeTimeRangeStatsParams {
     pub end_ts: String,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub struct RangeStats {
     pub successful: u64,
     pub failed: u64,
     pub timed_out: u64,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub struct ProverNodeTimeRangeStats {
     pub fst_id: Option<String>,
     pub fst_ts: Option<String>,
