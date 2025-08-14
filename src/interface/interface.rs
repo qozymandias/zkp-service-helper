@@ -619,26 +619,26 @@ pub struct ContractDeployments {
     pub static_file_checksum: Vec<u8>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub enum SubscriptionType {
     Basic,
     Developer,
     Enterprise,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub enum BaseSubscriptionDuration {
     Month,
     Year,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub struct SubscriptionDuration {
     pub base_duration: BaseSubscriptionDuration,
     pub multiplier: u64,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub struct SubscriptionParams {
     pub subscription_type: SubscriptionType,
     pub duration: SubscriptionDuration,
@@ -732,13 +732,13 @@ pub struct SubscriptionRequest {
     pub payment_hash: String,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub enum SubscriptionStatus {
     Active,
     Expired,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub struct ERC20DepositInfo {
     pub user_address: String,
     pub receiver_address: String,
@@ -748,7 +748,7 @@ pub struct ERC20DepositInfo {
     pub token_data: TokenData,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub struct Subscription {
     pub subscriber_address: String,
     pub start_date: u64,
@@ -770,7 +770,7 @@ pub struct TxHistoryQueryParams {
     pub total: Option<u64>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, PartialEq)]
 pub struct User {
     pub user_address: String,
     #[deprecated]
