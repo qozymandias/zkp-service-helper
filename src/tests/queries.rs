@@ -130,11 +130,14 @@ async fn test_query_prover_node_timerange_stats() {
     let now = std::time::SystemTime::now();
     let then = now - std::time::Duration::from_secs(4 * 7 * 24 * 60 * 60);
 
+    let start_dt: chrono::DateTime<chrono::Utc> = then.into();
+    let end_dt: chrono::DateTime<chrono::Utc> = now.into();
+
     let res = run_test!(
         ZkWasmServiceHelper::query_prover_node_timerange_stats,
         CONFIG.query.node_address.clone(),
-        then,
-        now,
+        start_dt.to_rfc3339(),
+        end_dt.to_rfc3339(),
     );
     let fst_dt: chrono::DateTime<chrono::Utc> = res.fst_ts.and_then(|s| s.parse().ok()).expect("Should convert");
     let lst_dt: chrono::DateTime<chrono::Utc> = res.lst_ts.and_then(|s| s.parse().ok()).expect("Should convert");

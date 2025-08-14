@@ -209,18 +209,16 @@ impl ZkWasmServiceHelper {
     pub async fn query_prover_node_timerange_stats(
         &self,
         node_address: String,
-        start_sys_t: std::time::SystemTime,
-        end_sys_t: std::time::SystemTime,
+        start_rfc_3339_ts_str: String,
+        end_rfc_3339_ts_str: String,
     ) -> anyhow::Result<ProverNodeTimeRangeStats> {
-        let start_dt: chrono::DateTime<chrono::Utc> = start_sys_t.into();
-        let end_dt: chrono::DateTime<chrono::Utc> = end_sys_t.into();
         self.endpoint
             .get(
                 TaskEndpoint::ProverNodeTimerangeStats,
                 ProverNodeTimeRangeStatsParams {
                     address: node_address,
-                    start_ts: start_dt.to_rfc3339(),
-                    end_ts: end_dt.to_rfc3339(),
+                    start_ts: start_rfc_3339_ts_str,
+                    end_ts: end_rfc_3339_ts_str,
                 },
                 None,
             )
