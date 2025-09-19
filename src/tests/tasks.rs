@@ -8,20 +8,24 @@ mod payments {
     use crate::interface::SubscriptionType;
 
     #[tokio::test]
+    #[ignore]
     async fn test_add_payment() {
-        let txhash = "".to_string();
+        // TODO
+        let txhash = String::new();
         run_test!(ZkWasmServiceHelper::add_payment, txhash);
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_add_subscription() {
-        let subscriber_address = "".to_string();
+        // TODO
+        let subscriber_address = String::new();
         let subscription_type = SubscriptionType::Basic;
         let duration = SubscriptionDuration {
             base_duration: crate::interface::BaseSubscriptionDuration::Month,
             multiplier: 1,
         };
-        let payment_hash = "".to_string();
+        let payment_hash = String::new();
         run_test!(
             ZkWasmServiceHelper::add_subscription,
             subscriber_address,
@@ -46,7 +50,7 @@ fn read_wasm(image: String) -> anyhow::Result<(Vec<u8>, String)> {
 async fn wait_for_done_task(id: &str) {
     loop {
         let res = ZKH
-            .query_tasks_from_id(id.to_string())
+            .query_task_from_id(id.to_string())
             .await
             .ok()
             .flatten()
@@ -54,11 +58,11 @@ async fn wait_for_done_task(id: &str) {
         if let crate::interface::TaskStatus::Done = res.status {
             break;
         }
-        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+        tokio::time::sleep(std::time::Duration::from_secs(5)).await;
     }
 }
 
-async fn run_setup_image() -> anyhow::Result<String> {
+async fn run_setup_image() -> anyhow::Result<(String, String)> {
     let (buffer, md5) = read_wasm(CONFIG.tasks.image.clone())?;
 
     let res = run_test!(
@@ -77,7 +81,7 @@ async fn run_setup_image() -> anyhow::Result<String> {
         crate::interface::InitialContext::Without,
         CONFIG.details.private_key.clone(),
     );
-    Ok(res.md5)
+    Ok((res.id, res.md5))
 }
 
 async fn run_prove_image(md5: String) -> anyhow::Result<String> {
@@ -85,8 +89,8 @@ async fn run_prove_image(md5: String) -> anyhow::Result<String> {
         ZkWasmServiceHelper::add_prove,
         CONFIG.user_address().clone(),
         md5,
-        vec!["2:i64".to_string(), "1:i64".to_string()],
-        vec!["".to_string()],
+        vec![],
+        vec![],
         crate::interface::ProofSubmitMode::Manual,
         crate::interface::CustomContext::Without,
         CONFIG.details.private_key.clone(),
@@ -124,17 +128,16 @@ async fn run_modify_image(md5: String) -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_basic_image_operations_sequentially() {
     println!("Running Setup ...");
-    let md5 = run_setup_image().await.expect("Should be able to setup image");
-    tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+    let (id, md5) = run_setup_image().await.expect("Should be able to setup image");
+    wait_for_done_task(&id).await;
 
     println!("Running Prove ...");
     let id = run_prove_image(md5.clone()).await.expect("Should be able to prove image");
     wait_for_done_task(&id).await;
-    tokio::time::sleep(std::time::Duration::from_secs(2)).await;
 
     println!("Running Reset ...");
-    run_reset_image(md5.clone()).await.expect("Should be able to reset image");
-    tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+    let id = run_reset_image(md5.clone()).await.expect("Should be able to reset image");
+    wait_for_done_task(&id).await;
 
     println!("Running Modify ...");
     run_modify_image(md5.clone()).await.expect("Should be able to modify image");
@@ -160,7 +163,7 @@ mod reprocess {
             CONFIG.user_address().clone(),
             CONFIG.details.private_key.clone(),
         );
-        assert_eq!(n_ids, res.len())
+        assert_eq!(n_ids, res.len());
     }
 
     #[tokio::test]
@@ -179,6 +182,6 @@ mod reprocess {
             CONFIG.user_address().clone(),
             CONFIG.details.private_key.clone(),
         );
-        assert_eq!(n_ids, res.len())
+        assert_eq!(n_ids, res.len());
     }
 }

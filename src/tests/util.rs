@@ -6,6 +6,7 @@ pub(super) struct DetailsConfig {
     pub server_url: String,
     pub private_key: String,
     pub chain_id: u32,
+    pub pedantic_checks: bool,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -23,20 +24,22 @@ pub(super) struct QueryConfig {
 
 #[derive(Deserialize, Serialize)]
 pub(super) struct AutoSubmitConfig {
-    pub id: String,
+    pub round1_id: String,
+    pub round2_id: String,
     pub task_id_in_auto_submit_batch: String,
 }
 
 #[derive(Deserialize, Serialize)]
 pub(super) struct ArchiveConfig {
+    pub server_url: String,
     pub id: String,
     pub archived_task_id: String,
     pub archive_volume_name: String,
+    pub archive_auto_submit_volume_name: String,
 }
 
 #[derive(Deserialize, Serialize)]
 pub(super) struct TasksConfig {
-    pub md5: String,
     pub image: String,
 }
 
@@ -52,7 +55,7 @@ pub(super) struct TestConfig {
 
 impl TestConfig {
     fn read_config() -> anyhow::Result<Self> {
-        let file = std::fs::File::open("test_config.json")?;
+        let file = std::fs::File::open("test.json")?;
         let reader = std::io::BufReader::new(file);
         let data: Self = serde_json::from_reader(reader)?;
         Ok(data)
@@ -65,14 +68,14 @@ impl TestConfig {
     pub fn user_address(&self) -> String {
         use ethers::signers::Signer;
         let wallet: ethers::signers::LocalWallet = self.details.private_key.parse().expect("Private key should parse");
-        wallet.address().to_string()
+        format!("{:#x}", wallet.address())
     }
 }
 
 pub(super) fn check_and_print<T: for<'de> Deserialize<'de> + Serialize>(result: anyhow::Result<T>) -> T {
     result
         .inspect(|inp| {
-            let s = serde_json::to_string_pretty(&inp).expect("Should be serializable");
+            let s = serde_json::to_string(&inp).expect("Should be serializable");
             let _ = serde_json::from_str::<T>(&s).expect("Should be deserializable");
             println!("{s}");
         })

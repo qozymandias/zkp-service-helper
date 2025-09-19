@@ -1,28 +1,103 @@
+use super::util::sign_object;
 use super::TaskEndpoint;
 use super::ZkWasmServiceEndpoint;
-use super::util::sign_object;
-use crate::interface::*;
+use crate::interface::AddImageParams;
+use crate::interface::AddProveTaskRestrictions;
+use crate::interface::AddTaskResult;
+use crate::interface::AdminRequestType;
+use crate::interface::AppConfig;
+use crate::interface::ArchiveMetadataOverview;
+use crate::interface::ArchiveQuery;
+use crate::interface::ArchiveServerConfig;
+use crate::interface::ArchiveVolumeMetadata;
+use crate::interface::ArchivedFinalBatchProof;
+use crate::interface::ArchivedFinalProofNetworkInfo;
+use crate::interface::AutoSubmitProof;
+use crate::interface::AutoSubmitProofQuery;
+use crate::interface::AutoSubmitProofStatus;
+use crate::interface::BaseAddImageParams;
+use crate::interface::BaseProvingParams;
+use crate::interface::BaseResetImageParams;
+use crate::interface::ConciseTask;
+use crate::interface::CustomContext;
+use crate::interface::DeployParams;
+use crate::interface::ERC20DepositInfo;
+use crate::interface::EmptyParams;
+use crate::interface::EstimatedProofFee;
+use crate::interface::EstimatedProofFeeParams;
+use crate::interface::ForceDryrunFailsToReprocessParams;
+use crate::interface::ForceUnprovableToReprocessParams;
+use crate::interface::Image;
+use crate::interface::InitialContext;
+use crate::interface::LogQuery;
+use crate::interface::MaintenanceModeType;
+use crate::interface::ModifyImageParams;
+use crate::interface::NodeStatisticsQueryParams;
+use crate::interface::ObjectId;
+use crate::interface::OnlineNodesSummary;
+use crate::interface::PaginatedQuery;
+use crate::interface::PaginationParams;
+use crate::interface::PaginationResult;
+use crate::interface::PaymentParams;
+use crate::interface::ProofSubmitMode;
+use crate::interface::ProvePaymentSrc;
+use crate::interface::ProverNode;
+use crate::interface::ProverNodeTimeRangeStats;
+use crate::interface::ProverNodeTimeRangeStatsParams;
+use crate::interface::ProverNodesSummary;
+use crate::interface::ProvingParams;
+use crate::interface::QueryImageParams;
+use crate::interface::QueryParams;
+use crate::interface::ResetContext;
+use crate::interface::ResetImageParams;
+use crate::interface::Round1Info;
+use crate::interface::Round1InfoQuery;
+use crate::interface::Round1Status;
+use crate::interface::Round2Info;
+use crate::interface::Round2InfoQuery;
+use crate::interface::Round2Status;
+use crate::interface::SetMaintenanceModeParams;
+use crate::interface::StatisticsInfo;
+use crate::interface::Subscription;
+use crate::interface::SubscriptionDuration;
+use crate::interface::SubscriptionRequest;
+use crate::interface::SubscriptionType;
+use crate::interface::Task;
+use crate::interface::TaskExternalHostTable;
+use crate::interface::TaskExternalHostTableParams;
+use crate::interface::TaskStatus;
+use crate::interface::TaskType;
+use crate::interface::TransactionInfo;
+use crate::interface::TxHistoryQueryParams;
+use crate::interface::User;
+use crate::interface::UserQueryParams;
+use crate::interface::VolumeDetailQuery;
+use crate::interface::VolumeDetailResponse;
+use crate::interface::VolumeListQuery;
 
 pub struct ZkWasmServiceHelper {
     endpoint: ZkWasmServiceEndpoint,
 }
 
 impl ZkWasmServiceHelper {
+    #[must_use]
     pub fn new(endpoint: String) -> Self {
         Self {
             endpoint: ZkWasmServiceEndpoint::new(endpoint),
         }
     }
 
-    pub async fn query_image(&self, md5: String) -> anyhow::Result<Image> {
+    pub async fn query_image(&self, md5: String) -> anyhow::Result<Option<Image>> {
         self.endpoint
-            .get::<_, Vec<Image>>(TaskEndpoint::Image, QueryImageParams { md5 }, None)
+            .get::<_, Vec<Option<Image>>>(TaskEndpoint::Image, QueryImageParams { md5 }, None)
             .await
             .map(|mut res| res.remove(0))
     }
 
     pub async fn query_image_binary(&self, md5: String) -> anyhow::Result<Vec<u8>> {
-        self.endpoint.get(TaskEndpoint::Image, QueryImageParams { md5 }, None).await
+        self.endpoint
+            .get(TaskEndpoint::ImageBinary, QueryImageParams { md5 }, None)
+            .await
     }
 
     pub async fn query_user(&self, user_address: String) -> anyhow::Result<Option<User>> {
@@ -133,22 +208,10 @@ impl ZkWasmServiceHelper {
 
     pub async fn query_prover_node_timerange_stats(
         &self,
-        node_address: String,
-        start_sys_t: std::time::SystemTime,
-        end_sys_t: std::time::SystemTime,
-    ) -> anyhow::Result<ProverNodeTimeRangeStats> {
-        let start_dt: chrono::DateTime<chrono::Utc> = start_sys_t.into();
-        let end_dt: chrono::DateTime<chrono::Utc> = end_sys_t.into();
+        query: ProverNodeTimeRangeStatsParams,
+    ) -> anyhow::Result<Vec<ProverNodeTimeRangeStats>> {
         self.endpoint
-            .get(
-                TaskEndpoint::ProverNodeTimerangeStats,
-                ProverNodeTimeRangeStatsParams {
-                    address: node_address,
-                    start_ts: start_dt.to_rfc3339(),
-                    end_ts: end_dt.to_rfc3339(),
-                },
-                None,
-            )
+            .post_json_body(TaskEndpoint::ProverNodeTimerangeStats, query, None)
             .await
     }
 
@@ -157,8 +220,8 @@ impl ZkWasmServiceHelper {
         user_address: Option<String>,
         md5: Option<String>,
         id: Option<String>,
-        tasktype: Option<String>,
-        taskstatus: Option<String>,
+        tasktype: Option<TaskType>,
+        taskstatus: Option<TaskStatus>,
         start: Option<u64>,
         total: Option<u64>,
     ) -> anyhow::Result<PaginationResult<Vec<Task>>> {
@@ -198,7 +261,7 @@ impl ZkWasmServiceHelper {
         Ok(out)
     }
 
-    pub async fn query_tasks_from_id(&self, id: String) -> anyhow::Result<Option<Task>> {
+    pub async fn query_task_from_id(&self, id: String) -> anyhow::Result<Option<Task>> {
         let mut tasks = self.query_tasks_from_ids(vec![id]).await?;
         if tasks.is_empty() {
             Ok(None)
@@ -212,8 +275,8 @@ impl ZkWasmServiceHelper {
         user_address: Option<String>,
         md5: Option<String>,
         id: Option<String>,
-        tasktype: Option<String>,
-        taskstatus: Option<String>,
+        tasktype: Option<TaskType>,
+        taskstatus: Option<TaskStatus>,
         start: Option<u64>,
         total: Option<u64>,
     ) -> anyhow::Result<PaginationResult<Vec<ConciseTask>>> {
@@ -261,7 +324,7 @@ impl ZkWasmServiceHelper {
                         circuit_size,
                         chain_id,
                     },
-                    pagination: PaginationParams { start, total },
+                    pagination: PaginationParams { total, start },
                 },
                 None,
             )
@@ -271,6 +334,7 @@ impl ZkWasmServiceHelper {
     pub async fn query_round1_info(
         &self,
         id: Option<String>,
+        auto_submit_queue_id: Option<String>,
         task_id: Option<String>,
         status: Option<Round1Status>,
         circuit_size: Option<u32>,
@@ -284,12 +348,14 @@ impl ZkWasmServiceHelper {
                 PaginatedQuery {
                     query: Round1InfoQuery {
                         id,
+                        // Note: `round_1_id` should never be used because it's never exposed to the user.
+                        round_1_id: auto_submit_queue_id,
                         task_id,
                         status,
                         circuit_size,
                         chain_id,
                     },
-                    pagination: PaginationParams { start, total },
+                    pagination: PaginationParams { total, start },
                 },
                 None,
             )
@@ -317,7 +383,7 @@ impl ZkWasmServiceHelper {
                         status,
                         chain_id,
                     },
-                    pagination: PaginationParams { start, total },
+                    pagination: PaginationParams { total, start },
                 },
                 None,
             )
@@ -332,7 +398,7 @@ impl ZkWasmServiceHelper {
         &self,
         start: Option<u64>,
         limit: Option<u64>,
-    ) -> anyhow::Result<Vec<ArchiveVolumeMetadata>> {
+    ) -> anyhow::Result<PaginationResult<Vec<ArchiveVolumeMetadata>>> {
         self.endpoint
             .get(TaskEndpoint::ArchiveTaskVolumeList, VolumeListQuery { start, limit }, None)
             .await
@@ -342,7 +408,7 @@ impl ZkWasmServiceHelper {
         &self,
         start: Option<u64>,
         limit: Option<u64>,
-    ) -> anyhow::Result<Vec<ArchiveVolumeMetadata>> {
+    ) -> anyhow::Result<PaginationResult<Vec<ArchiveVolumeMetadata>>> {
         self.endpoint
             .get(
                 TaskEndpoint::ArchiveAutoSubmitTaskVolumeList,
@@ -391,7 +457,7 @@ impl ZkWasmServiceHelper {
             .await
     }
 
-    pub async fn query_archive_server_config(&self) -> anyhow::Result<ArchiveConfig> {
+    pub async fn query_archive_server_config(&self) -> anyhow::Result<ArchiveServerConfig> {
         self.endpoint.get(TaskEndpoint::ArchiveConfig, EmptyParams {}, None).await
     }
 
@@ -418,7 +484,7 @@ impl ZkWasmServiceHelper {
         volume_name: String,
         tasks_start: Option<u64>,
         tasks_limit: Option<u64>,
-    ) -> anyhow::Result<Vec<ArchivedFinalBatchProof>> {
+    ) -> anyhow::Result<PaginationResult<Vec<ArchivedFinalBatchProof>>> {
         self.endpoint
             .get(
                 TaskEndpoint::ArchiveAutoSubmitVolume(volume_name),
@@ -439,7 +505,7 @@ impl ZkWasmServiceHelper {
         end_timestamp: Option<String>,
         start: Option<u64>,
         limit: Option<u64>,
-    ) -> anyhow::Result<Vec<ArchivedFinalBatchProof>> {
+    ) -> anyhow::Result<PaginationResult<Vec<ConciseTask>>> {
         self.endpoint
             .get(
                 TaskEndpoint::ArchiveArchiveQuery,
@@ -500,8 +566,8 @@ impl ZkWasmServiceHelper {
         let params = AddImageParams {
             base: BaseAddImageParams {
                 name,
-                image,
                 image_md5,
+                image,
                 user_address,
                 description_url,
                 avator_url,
@@ -599,7 +665,9 @@ impl ZkWasmServiceHelper {
             avator_url,
         };
         let signature = sign_object(&params, private_key).await?;
-        self.endpoint.post(TaskEndpoint::Modify, params, Some(signature)).await
+        self.endpoint
+            .post_json_body(TaskEndpoint::Modify, params, Some(signature))
+            .await
     }
 
     #[deprecated]

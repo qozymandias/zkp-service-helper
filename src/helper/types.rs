@@ -1,48 +1,90 @@
 pub enum TaskEndpoint {
+    /// `/image`
     Image,
+    /// `/imagebinary`
     ImageBinary,
+    /// `/user`
     User,
+    /// `/user_subscription`
     UserSubscription,
+    /// `/transactions`
     Transactions,
+    /// `/deposits`
     Deposits,
+    /// `/config`
     Config,
+    /// `/statistics`
     Statistics,
+    /// `/node_statistics`
     NodeStatistics,
+    /// `/prover_node_summary`
     ProverNodeSummary,
+    /// `/online_nodes_summary`
     OnlineNodesSummary,
+    /// `/tasks`
     Tasks,
+    /// `/tasklist`
     ConciseTasks,
+    /// `/task_external_host_table`
     TaskExternalHostTable,
+    /// `/round1_batch_proofs`
     Round1Batch,
+    /// `/round2_batch_proofs`
     Round2Batch,
+    /// `/final_batch_proofs`
     FinalBatch,
+    /// `/logs`
     Logs,
+    /// `/archive/summary`
     ArchiveSummary,
+    /// `/archive/task_volume_list`
     ArchiveTaskVolumeList,
+    /// `/archive/auto_submit_volume_list`
     ArchiveAutoSubmitTaskVolumeList,
+    /// `/archive/task`
     ArchiveTask(String),
+    /// `/archive/auto_submit_networks`
     ArchiveAutoSubmitNetworks(String),
+    /// `/archive/auto_submit_info_by_task`
     ArchiveAutoSubmitInfoByTask(String, u32),
+    /// `/archive/auto_submit_info`
     ArchiveAutoSubmitInfo(String, u32),
+    /// `/archive/config`
     ArchiveConfig,
+    /// `/archive/task_volume`
     ArchiveTaskVolume(String),
+    /// `/archive/auto_submit_volume`
     ArchiveAutoSubmitVolume(String),
+    /// `/archive/archive_query`
     ArchiveArchiveQuery,
+    /// `/pay`
     Pay,
+    /// `/subscribe`
     Subscribe,
+    /// `/setup`
     Setup,
+    /// `/prove`
     Prove,
+    /// `/deploy`
     Deploy,
+    /// `/reset`
     Reset,
+    /// `/modify`
     Modify,
+    /// `/set_maintenance_mode`
     SetMaintenanceMode,
+    /// `/force_unprovable_to_reprocess`
     ForceUnprovableToReprocess,
+    /// `/force_dryrun_fails_to_reprocess`
     ForceDryrunFailsToReprocess,
+    /// `/estimated_proof_fee`
     EstimatedProofFee,
+    /// `/prover_node_timerange_stats`
     ProverNodeTimerangeStats,
 }
 
 impl TaskEndpoint {
+    #[must_use]
     pub fn as_path(&self) -> &'static str {
         match self {
             TaskEndpoint::Image => "image",
@@ -89,6 +131,7 @@ impl TaskEndpoint {
         }
     }
 
+    #[must_use]
     pub fn path_params(&self) -> String {
         match self {
             TaskEndpoint::ArchiveTask(fst)
@@ -100,7 +143,7 @@ impl TaskEndpoint {
             TaskEndpoint::ArchiveAutoSubmitInfoByTask(fst, snd) | TaskEndpoint::ArchiveAutoSubmitInfo(fst, snd) => {
                 format!("/{fst}/{snd}")
             }
-            _ => "".to_string(),
+            _ => String::new(),
         }
     }
 }
