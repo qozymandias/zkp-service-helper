@@ -148,7 +148,7 @@ impl IntoMultipartForm {
     /// Converts a serializable object into a [`reqwest::multipart::Form`].
     ///
     /// The object must serialize into a JSON object (top-level map). Each field is converted into one or more [`Part`]s
-    /// using [`create_parts`].
+    /// using [`Self::create_parts`].
     ///
     /// # Errors
     ///
@@ -156,7 +156,7 @@ impl IntoMultipartForm {
     ///
     /// - Serialization fails.
     /// - The top-level value is not an object.
-    /// - Any field fails conversion in [`create_parts`].
+    /// - Any field fails conversion in [`Self::create_parts`].
     pub fn into_multipart_form<T: Serialize + SerializationAttributes>(
         params: T,
     ) -> anyhow::Result<reqwest::multipart::Form> {
