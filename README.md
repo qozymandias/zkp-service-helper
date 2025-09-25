@@ -18,3 +18,11 @@ Run archive query tests:
 ```
 cargo test tests::archive
 ```
+
+## Documentation
+
+Build documentation
+
+```
+cargo doc --no-deps
+```

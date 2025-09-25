@@ -1,10 +1,6 @@
-mod endpoint;
-pub use endpoint::*;
+pub(super) mod endpoint;
 
-mod types;
-pub use types::*;
+pub(super) mod util;
 
 mod helper;
-pub use helper::*;
-
-pub mod util;
+pub use helper::ZkWasmServiceHelper;

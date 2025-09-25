@@ -1,6 +1,17 @@
 use super::*;
 use crate::run_test;
 
+fn read_wasm(image: String) -> anyhow::Result<(Vec<u8>, String)> {
+    use std::io::Read;
+
+    let mut file = std::fs::File::open(image)?;
+    let mut buffer = Vec::new();
+    file.read_to_end(&mut buffer)?;
+
+    let md5 = format!("{:X}", md5::compute(&buffer)).to_uppercase();
+    Ok((buffer, md5))
+}
+
 #[cfg(test)]
 mod payments {
     use super::*;
@@ -34,17 +45,6 @@ mod payments {
             payment_hash,
         );
     }
-}
-
-fn read_wasm(image: String) -> anyhow::Result<(Vec<u8>, String)> {
-    use std::io::Read;
-
-    let mut file = std::fs::File::open(image)?;
-    let mut buffer = Vec::new();
-    file.read_to_end(&mut buffer)?;
-
-    let md5 = format!("{:X}", md5::compute(&buffer)).to_uppercase();
-    Ok((buffer, md5))
 }
 
 async fn wait_for_done_task(id: &str) {

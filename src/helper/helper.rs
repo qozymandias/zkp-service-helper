@@ -1,6 +1,6 @@
+use super::endpoint::TaskEndpoint;
+use super::endpoint::ZkWasmServiceEndpoint;
 use super::util::sign_object;
-use super::TaskEndpoint;
-use super::ZkWasmServiceEndpoint;
 use crate::interface::AddImageParams;
 use crate::interface::AddProveTaskRestrictions;
 use crate::interface::AddTaskResult;
@@ -75,6 +75,10 @@ use crate::interface::VolumeDetailQuery;
 use crate::interface::VolumeDetailResponse;
 use crate::interface::VolumeListQuery;
 
+/// A helper struct for interacting with the `ZkWasm` service endpoint.
+///
+/// This struct encapsulates a [`ZkWasmServiceEndpoint`] and provides convenience functions for interacting with the API
+/// endpoints.
 pub struct ZkWasmServiceHelper {
     endpoint: ZkWasmServiceEndpoint,
 }
@@ -210,9 +214,7 @@ impl ZkWasmServiceHelper {
         &self,
         query: ProverNodeTimeRangeStatsParams,
     ) -> anyhow::Result<Vec<ProverNodeTimeRangeStats>> {
-        self.endpoint
-            .post_json_body(TaskEndpoint::ProverNodeTimerangeStats, query, None)
-            .await
+        self.endpoint.post(TaskEndpoint::ProverNodeTimerangeStats, query, None).await
     }
 
     pub async fn query_tasks(
@@ -665,9 +667,7 @@ impl ZkWasmServiceHelper {
             avator_url,
         };
         let signature = sign_object(&params, private_key).await?;
-        self.endpoint
-            .post_json_body(TaskEndpoint::Modify, params, Some(signature))
-            .await
+        self.endpoint.post(TaskEndpoint::Modify, params, Some(signature)).await
     }
 
     #[deprecated]
